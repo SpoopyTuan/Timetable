@@ -113,66 +113,29 @@ flowchart TB
     end
 
     subgraph system[Timetable Management System]
-        direction TB
-        auth([UC01 Login / Logout])
-        profile([UC17 Manage Profile])
-        users([UC02 Manage Users and Roles])
-        master([UC03 Manage Academic Data])
-        draft([UC04 Create Timetable Draft])
-        session([UC05–UC06 Manage Sessions])
-        conflict([UC07 Check Conflicts])
-        timetable([UC08 View / Filter Timetable])
-        publish([UC09 Publish / Unpublish])
-        availability([UC10 Manage Availability])
-        personal([UC11–UC12 View Personal / Class Timetable])
-        import([UC13 Import Excel Data])
-        export([UC14 Export Timetable])
-        audit([UC15 View Audit Log])
-        notify([UC16 Receive Change Notifications])
+        direction LR
+        adminCases["<b>Administrator</b><br/><br/>UC01 Login · UC17 Manage Profile<br/>UC02 Manage Users and Roles<br/>UC03 Manage Academic Data<br/>UC04–UC09 Plan, Check, and Publish Timetables<br/>UC08 View Timetables · UC13 Import · UC14 Export<br/>UC15 View Audit Log · UC16 Receive Notifications"]
+        coordinatorCases["<b>Timetable Coordinator</b><br/><br/>UC01 Login · UC17 Manage Profile<br/>UC03 Manage Academic Data<br/>UC04–UC09 Plan, Check, and Publish Timetables<br/>UC08 View Timetables · UC13 Import · UC14 Export<br/>UC15 View Audit Log · UC16 Receive Notifications"]
+        lecturerCases["<b>Lecturer</b><br/><br/>UC01 Login · UC17 Manage Profile<br/>UC10 Manage Availability<br/>UC11 View Assigned Timetable<br/>UC14 Export Timetable · UC16 Receive Notifications"]
+        studentCases["<b>Student</b><br/><br/>UC01 Login · UC17 Manage Profile<br/>UC12 View Class Timetable<br/>UC14 Export Timetable · UC16 Receive Notifications"]
     end
 
-    admin --- auth
-    admin --- profile
-    admin --- users
-    admin --- master
-    admin --- timetable
-    admin --- audit
-    admin --- export
-
-    coordinator --- auth
-    coordinator --- profile
-    coordinator --- master
-    coordinator --- draft
-    coordinator --- session
-    coordinator --- conflict
-    coordinator --- timetable
-    coordinator --- publish
-    coordinator --- import
-    coordinator --- export
-    coordinator --- audit
-    coordinator --- notify
-
-    lecturer --- auth
-    lecturer --- profile
-    lecturer --- availability
-    lecturer --- personal
-    lecturer --- export
-    lecturer --- notify
-
-    student --- auth
-    student --- profile
-    student --- personal
-    student --- export
-    student --- notify
-
-    session -. includes .-> conflict
-    publish -. requires .-> conflict
+    admin --> adminCases
+    coordinator --> coordinatorCases
+    lecturer --> lecturerCases
+    student --> studentCases
 
     classDef actor fill:#666,color:#fff,stroke:#333
-    classDef usecase fill:#1168bd,color:#fff,stroke:#0b4f9e
+    classDef primary fill:#1168bd,color:#fff,stroke:#0b4f9e
+    classDef standard fill:#3a7bd5,color:#fff,stroke:#245fa8
     class admin,coordinator,lecturer,student actor
-    class auth,profile,users,master,draft,session,conflict,timetable,publish,availability,personal,import,export,audit,notify usecase
+    class adminCases,coordinatorCases primary
+    class lecturerCases,studentCases standard
+    style roles fill:#fff,stroke:#bbb,stroke-dasharray:5 5
+    style system fill:#f8fbff,stroke:#1168bd,stroke-dasharray:5 5
 ```
+
+The detailed use-case diagram, including individual use cases and their relationships, is in [docs/use-cases.md](docs/use-cases.md).
 
 ### 1.4 Roles and permissions
 
