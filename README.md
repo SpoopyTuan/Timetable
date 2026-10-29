@@ -1,6 +1,6 @@
 # Timetable Management System — Analysis
 
-This analysis follows the structure of sections 1 and 2 of the referenced HandmadeFinance README, adapted for an academic timetable-management system. The V1 scope assumes a school or university that publishes teaching timetables for classes, lecturers, and rooms.
+This analysis defines an academic timetable-management system for a school or university that publishes teaching timetables for classes, lecturers, and rooms.
 
 ## 1. Requirements — INVEST, Use Cases, and Acceptance Criteria
 
@@ -8,53 +8,7 @@ Requirements state the intended users, system value, and observable success cond
 
 ### 1.1 Product mind map
 
-Import or recreate the following outline in XMind. The first line is the central topic; indented lines are child topics.
-
-```text
-Timetable Management System
-    Users and access
-        Administrator
-            Manage user accounts and roles
-            Manage master data
-            View audit history
-        Timetable Coordinator
-            Build and publish timetables
-            Resolve conflicts
-            Import timetable data
-        Lecturer
-            Set availability preferences
-            View personal timetable
-        Student
-            View class timetable
-            Export or subscribe to timetable
-    Academic setup
-        Academic years and terms
-        Subjects and modules
-        Classes and sections
-        Lecturers
-        Rooms and capacities
-        Teaching periods and time slots
-    Timetable planning
-        Create draft timetable
-        Assign subject, class, lecturer, room, and time slot
-        Edit, move, and cancel sessions
-        Detect class, lecturer, room, capacity, and availability conflicts
-        Publish and unpublish timetable
-    Timetable access
-        Calendar, week, day, and list views
-        Filter by class, lecturer, room, subject, and term
-        View session details
-        Export PDF or Excel
-    Data and governance
-        Import classes, lecturers, rooms, or sessions
-        Validation and import results
-        Change history / audit log
-        Notifications for publishing and changes
-    Personal settings
-        Profile
-        Password
-        Notification preferences
-```
+![Timetable Management System mind map](docs/timetablemindmap.png)
 
 ### 1.2 INVEST requirements
 
