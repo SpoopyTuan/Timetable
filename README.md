@@ -295,3 +295,73 @@ flowchart TB
 ```
 
 The C3 design makes conflict detection a separate component so the same rules can be applied consistently when a session is created, edited, imported, or published.
+
+## 4. Database Diagrams and OpenAPI 3.0 Contract
+
+### 4.1 Database diagram
+
+The target relational model separates academic master data, timetable versions, teaching sessions, personal availability, imports, notifications, and audit events. A timetable version is either a draft or a published version; a term can have multiple versions but only one should be published at a time.
+
+```mermaid
+erDiagram
+    app_users ||--o| lecturer_profiles : has
+    app_users ||--o{ student_enrollments : creates
+    academic_years ||--o{ terms : contains
+    terms ||--o{ class_sections : includes
+    subjects ||--o{ class_sections : defines
+    class_sections ||--o{ student_enrollments : enrolls
+    terms ||--o{ timetable_versions : owns
+    timetable_versions ||--o{ timetable_sessions : contains
+    class_sections ||--o{ timetable_sessions : attends
+    subjects ||--o{ timetable_sessions : teaches
+    lecturer_profiles ||--o{ timetable_sessions : delivers
+    rooms ||--o{ timetable_sessions : hosts
+    lecturer_profiles ||--o{ lecturer_availability : declares
+    import_batches ||--o{ import_errors : reports
+    timetable_sessions ||--o{ notifications : triggers
+    app_users ||--o{ notifications : receives
+    app_users ||--o{ audit_logs : performs
+
+    app_users {
+        bigint id PK
+        varchar email
+        user_role role
+        boolean is_active
+    }
+    terms {
+        bigint id PK
+        bigint academic_year_id FK
+        varchar name
+    }
+    class_sections {
+        bigint id PK
+        bigint term_id FK
+        bigint subject_id FK
+        integer expected_size
+    }
+    timetable_versions {
+        bigint id PK
+        bigint term_id FK
+        timetable_status status
+    }
+    timetable_sessions {
+        bigint id PK
+        bigint timetable_version_id FK
+        bigint class_section_id FK
+        bigint lecturer_user_id FK
+        bigint room_id FK
+        date session_date
+        time starts_at
+        time ends_at
+        session_status status
+    }
+```
+
+Complete Mermaid ERD sources: [docs/database/README.md](docs/database/README.md).
+
+### 4.2 OpenAPI 3.0 contract
+
+The API contract defines bearer-token security and endpoints for authentication, profile management, academic data, timetable drafts, sessions, conflict checks, availability, import/export, audit logs, and notifications. Conflict checks return an explicit `409 Conflict` when a save or publish operation is blocked.
+
+- [OpenAPI 3.0.3 specification](docs/api/openapi.yaml)
+- JSON request, response, validation-error, and `application/problem+json` contracts are defined in reusable schemas.

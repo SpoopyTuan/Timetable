@@ -1,0 +1,312 @@
+openapi: 3.0.3
+info:
+  title: Timetable Management API
+  version: 1.0.0
+  description: |
+    HTTP contract for academic timetable planning, conflict validation,
+    publication, personal timetable access, import/export, audit, and notifications.
+servers:
+  - url: https://api.example.edu/v1
+    description: Production placeholder
+tags:
+  - name: Authentication
+  - name: Profile
+  - name: Academic data
+  - name: Timetables
+  - name: Sessions
+  - name: Availability
+  - name: Import and export
+  - name: Audit and notifications
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Authenticated session
+          content: { application/json: { schema: { $ref: '#/components/schemas/LoginResponse' } } }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      operationId: logout
+      responses:
+        '204': { description: Session ended }
+  /me:
+    get:
+      tags: [Profile]
+      operationId: getCurrentUser
+      responses:
+        '200': { description: Current profile, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+    patch:
+      tags: [Profile]
+      operationId: updateCurrentUser
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/UpdateProfileRequest' } } }
+      responses:
+        '200': { description: Updated profile, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+  /me/password:
+    put:
+      tags: [Profile]
+      operationId: changePassword
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/ChangePasswordRequest' } } }
+      responses:
+        '204': { description: Password changed }
+        '400': { $ref: '#/components/responses/ValidationError' }
+  /users:
+    get:
+      tags: [Profile]
+      operationId: listUsers
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { $ref: '#/components/parameters/Role' }]
+      responses:
+        '200': { description: Users, content: { application/json: { schema: { $ref: '#/components/schemas/PagedUsers' } } } }
+    post:
+      tags: [Profile]
+      operationId: createUser
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateUserRequest' } } }
+      responses:
+        '201': { description: User created, content: { application/json: { schema: { $ref: '#/components/schemas/User' } } } }
+  /academic-years:
+    get:
+      tags: [Academic data]
+      operationId: listAcademicYears
+      responses: { '200': { description: Academic years, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AcademicYear' } } } } }
+    post:
+      tags: [Academic data]
+      operationId: createAcademicYear
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AcademicYearInput' } } } }
+      responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/AcademicYear' } } } } }
+  /terms:
+    get:
+      tags: [Academic data]
+      operationId: listTerms
+      parameters: [{ name: academicYearId, in: query, schema: { type: integer, format: int64 } }]
+      responses: { '200': { description: Terms, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Term' } } } } }
+    post:
+      tags: [Academic data]
+      operationId: createTerm
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/TermInput' } } } }
+      responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Term' } } } } }
+  /subjects:
+    get:
+      tags: [Academic data]
+      operationId: listSubjects
+      responses: { '200': { description: Subjects, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Subject' } } } } }
+    post:
+      tags: [Academic data]
+      operationId: createSubject
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SubjectInput' } } } }
+      responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Subject' } } } } }
+  /class-sections:
+    get:
+      tags: [Academic data]
+      operationId: listClassSections
+      parameters: [{ name: termId, in: query, schema: { type: integer, format: int64 } }]
+      responses: { '200': { description: Class sections, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ClassSection' } } } } }
+    post:
+      tags: [Academic data]
+      operationId: createClassSection
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ClassSectionInput' } } } }
+      responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/ClassSection' } } } } }
+  /rooms:
+    get:
+      tags: [Academic data]
+      operationId: listRooms
+      responses: { '200': { description: Rooms, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Room' } } } } }
+    post:
+      tags: [Academic data]
+      operationId: createRoom
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/RoomInput' } } } }
+      responses: { '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Room' } } } } }
+  /time-slots:
+    get:
+      tags: [Academic data]
+      operationId: listTimeSlots
+      responses: { '200': { description: Time slots, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/TimeSlot' } } } } }
+  /timetables:
+    get:
+      tags: [Timetables]
+      operationId: listTimetableVersions
+      parameters: [{ name: termId, in: query, required: true, schema: { type: integer, format: int64 } }]
+      responses: { '200': { description: Timetable versions, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/TimetableVersion' } } } } }
+    post:
+      tags: [Timetables]
+      operationId: createTimetableDraft
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CreateTimetableRequest' } } } }
+      responses: { '201': { description: Draft created, content: { application/json: { schema: { $ref: '#/components/schemas/TimetableVersion' } } } } }
+  /timetables/{timetableId}:
+    get:
+      tags: [Timetables]
+      operationId: getTimetableVersion
+      parameters: [{ $ref: '#/components/parameters/TimetableId' }]
+      responses: { '200': { description: Timetable version, content: { application/json: { schema: { $ref: '#/components/schemas/TimetableVersion' } } } }, '404': { $ref: '#/components/responses/NotFound' } }
+  /timetables/{timetableId}/publish:
+    post:
+      tags: [Timetables]
+      operationId: publishTimetable
+      parameters: [{ $ref: '#/components/parameters/TimetableId' }]
+      responses:
+        '200': { description: Published timetable, content: { application/json: { schema: { $ref: '#/components/schemas/TimetableVersion' } } } }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /timetables/{timetableId}/unpublish:
+    post:
+      tags: [Timetables]
+      operationId: unpublishTimetable
+      parameters: [{ $ref: '#/components/parameters/TimetableId' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/UnpublishRequest' } } } }
+      responses: { '200': { description: Returned to draft, content: { application/json: { schema: { $ref: '#/components/schemas/TimetableVersion' } } } } }
+  /sessions:
+    get:
+      tags: [Sessions]
+      operationId: listSessions
+      parameters: [{ name: timetableId, in: query, required: true, schema: { type: integer, format: int64 } }, { name: classSectionId, in: query, schema: { type: integer, format: int64 } }, { name: lecturerId, in: query, schema: { type: integer, format: int64 } }, { name: roomId, in: query, schema: { type: integer, format: int64 } }, { name: from, in: query, schema: { type: string, format: date } }, { name: to, in: query, schema: { type: string, format: date } }]
+      responses: { '200': { description: Sessions, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/TimetableSession' } } } } }
+    post:
+      tags: [Sessions]
+      operationId: createSession
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SessionInput' } } } }
+      responses: { '201': { description: Session created, content: { application/json: { schema: { $ref: '#/components/schemas/TimetableSession' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+  /sessions/{sessionId}:
+    patch:
+      tags: [Sessions]
+      operationId: updateSession
+      parameters: [{ $ref: '#/components/parameters/SessionId' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SessionInput' } } } }
+      responses: { '200': { description: Session updated, content: { application/json: { schema: { $ref: '#/components/schemas/TimetableSession' } } } }, '409': { $ref: '#/components/responses/Conflict' } }
+    delete:
+      tags: [Sessions]
+      operationId: cancelSession
+      parameters: [{ $ref: '#/components/parameters/SessionId' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CancelSessionRequest' } } } }
+      responses: { '204': { description: Session cancelled } }
+  /sessions/conflicts:
+    post:
+      tags: [Sessions]
+      operationId: checkSessionConflicts
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/SessionInput' } } } }
+      responses: { '200': { description: Conflict check result, content: { application/json: { schema: { $ref: '#/components/schemas/ConflictCheckResult' } } } } }
+  /lecturers/me/availability:
+    get:
+      tags: [Availability]
+      operationId: getMyAvailability
+      responses: { '200': { description: Availability entries, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Availability' } } } } }
+    put:
+      tags: [Availability]
+      operationId: replaceMyAvailability
+      requestBody: { required: true, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AvailabilityInput' } } } } }
+      responses: { '200': { description: Saved availability, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Availability' } } } } }
+  /me/timetable:
+    get:
+      tags: [Timetables]
+      operationId: getMyTimetable
+      parameters: [{ name: termId, in: query, required: true, schema: { type: integer, format: int64 } }]
+      responses: { '200': { description: Personal timetable, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/TimetableSession' } } } } }
+  /class-sections/{classSectionId}/timetable:
+    get:
+      tags: [Timetables]
+      operationId: getClassTimetable
+      parameters: [{ name: classSectionId, in: path, required: true, schema: { type: integer, format: int64 } }, { name: termId, in: query, required: true, schema: { type: integer, format: int64 } }]
+      responses: { '200': { description: Published class timetable, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/TimetableSession' } } } } }
+  /imports:
+    post:
+      tags: [Import and export]
+      operationId: importWorkbook
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, importType]
+              properties:
+                file: { type: string, format: binary }
+                importType: { type: string, enum: [academic_data, timetable_sessions] }
+                termId: { type: integer, format: int64 }
+      responses: { '202': { description: Import validation result, content: { application/json: { schema: { $ref: '#/components/schemas/ImportBatch' } } } } }
+  /exports/timetable:
+    get:
+      tags: [Import and export]
+      operationId: exportTimetable
+      parameters: [{ name: timetableId, in: query, required: true, schema: { type: integer, format: int64 } }, { name: format, in: query, required: true, schema: { type: string, enum: [pdf, xlsx] } }]
+      responses: { '200': { description: Export file, content: { application/pdf: { schema: { type: string, format: binary } }, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } } } } }
+  /audit-logs:
+    get:
+      tags: [Audit and notifications]
+      operationId: listAuditLogs
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }, { name: module, in: query, schema: { type: string } }, { name: actorUserId, in: query, schema: { type: integer, format: int64 } }]
+      responses: { '200': { description: Audit events, content: { application/json: { schema: { $ref: '#/components/schemas/PagedAuditLogs' } } } }
+  /notifications:
+    get:
+      tags: [Audit and notifications]
+      operationId: listNotifications
+      responses: { '200': { description: Current user's notifications, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Notification' } } } } }
+  /notifications/{notificationId}/read:
+    post:
+      tags: [Audit and notifications]
+      operationId: markNotificationRead
+      parameters: [{ name: notificationId, in: path, required: true, schema: { type: integer, format: int64 } }]
+      responses: { '204': { description: Notification marked as read } }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    Page: { name: page, in: query, schema: { type: integer, minimum: 1, default: 1 } }
+    PageSize: { name: pageSize, in: query, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    Role: { name: role, in: query, schema: { $ref: '#/components/schemas/UserRole' } }
+    TimetableId: { name: timetableId, in: path, required: true, schema: { type: integer, format: int64 } }
+    SessionId: { name: sessionId, in: path, required: true, schema: { type: integer, format: int64 } }
+  responses:
+    Unauthorized: { description: Missing, expired, or invalid access token, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+    NotFound: { description: Requested resource was not found, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+    ValidationError: { description: Request validation failed, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+    Conflict: { description: A scheduling conflict prevents this operation, content: { application/problem+json: { schema: { $ref: '#/components/schemas/Problem' } } } }
+  schemas:
+    UserRole: { type: string, enum: [administrator, coordinator, lecturer, student] }
+    LoginRequest: { type: object, required: [email, password], properties: { email: { type: string, format: email }, password: { type: string, format: password } } }
+    LoginResponse: { type: object, required: [accessToken, expiresAt, user], properties: { accessToken: { type: string }, expiresAt: { type: string, format: date-time }, user: { $ref: '#/components/schemas/User' } } }
+    User: { type: object, required: [id, email, fullName, role, isActive], properties: { id: { type: integer, format: int64 }, email: { type: string, format: email }, fullName: { type: string }, role: { $ref: '#/components/schemas/UserRole' }, isActive: { type: boolean } } }
+    UpdateProfileRequest: { type: object, properties: { fullName: { type: string, minLength: 1, maxLength: 150 }, notificationEnabled: { type: boolean } } }
+    ChangePasswordRequest: { type: object, required: [currentPassword, newPassword], properties: { currentPassword: { type: string, format: password }, newPassword: { type: string, format: password, minLength: 8 } } }
+    CreateUserRequest: { allOf: [{ $ref: '#/components/schemas/User' }, { type: object, required: [password], properties: { password: { type: string, format: password } } }] }
+    AcademicYearInput: { type: object, required: [name, startsOn, endsOn], properties: { name: { type: string }, startsOn: { type: string, format: date }, endsOn: { type: string, format: date } } }
+    AcademicYear: { allOf: [{ $ref: '#/components/schemas/AcademicYearInput' }, { type: object, required: [id], properties: { id: { type: integer, format: int64 }, isActive: { type: boolean } } }] }
+    TermInput: { type: object, required: [academicYearId, name, startsOn, endsOn], properties: { academicYearId: { type: integer, format: int64 }, name: { type: string }, startsOn: { type: string, format: date }, endsOn: { type: string, format: date } } }
+    Term: { allOf: [{ $ref: '#/components/schemas/TermInput' }, { type: object, required: [id], properties: { id: { type: integer, format: int64 }, isActive: { type: boolean } } }] }
+    SubjectInput: { type: object, required: [code, name], properties: { code: { type: string }, name: { type: string }, credits: { type: number }, defaultDurationMinutes: { type: integer } } }
+    Subject: { allOf: [{ $ref: '#/components/schemas/SubjectInput' }, { type: object, required: [id], properties: { id: { type: integer, format: int64 }, isActive: { type: boolean } } }] }
+    ClassSectionInput: { type: object, required: [termId, subjectId, code, name, expectedSize], properties: { termId: { type: integer, format: int64 }, subjectId: { type: integer, format: int64 }, code: { type: string }, name: { type: string }, expectedSize: { type: integer, minimum: 1 } } }
+    ClassSection: { allOf: [{ $ref: '#/components/schemas/ClassSectionInput' }, { type: object, required: [id], properties: { id: { type: integer, format: int64 }, isActive: { type: boolean } } }] }
+    RoomInput: { type: object, required: [code, name, capacity], properties: { code: { type: string }, name: { type: string }, building: { type: string }, capacity: { type: integer, minimum: 1 } } }
+    Room: { allOf: [{ $ref: '#/components/schemas/RoomInput' }, { type: object, required: [id], properties: { id: { type: integer, format: int64 }, isActive: { type: boolean } } }] }
+    TimeSlot: { type: object, required: [id, name, dayOfWeek, startsAt, endsAt], properties: { id: { type: integer, format: int64 }, name: { type: string }, dayOfWeek: { type: integer, minimum: 1, maximum: 7 }, startsAt: { type: string, pattern: '^\\d{2}:\\d{2}$' }, endsAt: { type: string, pattern: '^\\d{2}:\\d{2}$' } } }
+    CreateTimetableRequest: { type: object, required: [termId], properties: { termId: { type: integer, format: int64 } } }
+    TimetableVersion: { type: object, required: [id, termId, versionNumber, status], properties: { id: { type: integer, format: int64 }, termId: { type: integer, format: int64 }, versionNumber: { type: integer }, status: { type: string, enum: [draft, published, archived] }, publishedAt: { type: string, format: date-time, nullable: true } } }
+    UnpublishRequest: { type: object, required: [reason], properties: { reason: { type: string, minLength: 1, maxLength: 1000 } } }
+    SessionInput: { type: object, required: [timetableId, classSectionId, subjectId, lecturerId, roomId, sessionDate, startsAt, endsAt], properties: { timetableId: { type: integer, format: int64 }, classSectionId: { type: integer, format: int64 }, subjectId: { type: integer, format: int64 }, lecturerId: { type: integer, format: int64 }, roomId: { type: integer, format: int64 }, sessionDate: { type: string, format: date }, startsAt: { type: string, pattern: '^\\d{2}:\\d{2}$' }, endsAt: { type: string, pattern: '^\\d{2}:\\d{2}$' }, note: { type: string, maxLength: 2000 } } }
+    TimetableSession: { allOf: [{ $ref: '#/components/schemas/SessionInput' }, { type: object, required: [id, status], properties: { id: { type: integer, format: int64 }, status: { type: string, enum: [scheduled, changed, cancelled] }, cancellationReason: { type: string, nullable: true } } }] }
+    ConflictCheckResult: { type: object, required: [hasBlockingConflicts, conflicts], properties: { hasBlockingConflicts: { type: boolean }, conflicts: { type: array, items: { $ref: '#/components/schemas/SchedulingConflict' } } } }
+    SchedulingConflict: { type: object, required: [type, severity, message], properties: { type: { type: string, enum: [class_overlap, lecturer_overlap, room_overlap, capacity, availability] }, severity: { type: string, enum: [blocking, warning] }, message: { type: string }, conflictingSessionIds: { type: array, items: { type: integer, format: int64 } } } }
+    CancelSessionRequest: { type: object, required: [reason], properties: { reason: { type: string, minLength: 1, maxLength: 1000 } } }
+    AvailabilityInput: { type: object, required: [availableOn, startsAt, endsAt, status], properties: { availableOn: { type: string, format: date }, startsAt: { type: string, pattern: '^\\d{2}:\\d{2}$' }, endsAt: { type: string, pattern: '^\\d{2}:\\d{2}$' }, status: { type: string, enum: [preferred, unavailable] }, note: { type: string, maxLength: 500 } } }
+    Availability: { allOf: [{ $ref: '#/components/schemas/AvailabilityInput' }, { type: object, required: [id], properties: { id: { type: integer, format: int64 } } }] }
+    ImportBatch: { type: object, required: [id, status, totalRows, successRows, failedRows], properties: { id: { type: integer, format: int64 }, status: { type: string, enum: [pending, completed, failed] }, totalRows: { type: integer }, successRows: { type: integer }, failedRows: { type: integer }, errors: { type: array, items: { $ref: '#/components/schemas/ImportError' } } } }
+    ImportError: { type: object, required: [rowNumber, message], properties: { rowNumber: { type: integer }, columnName: { type: string, nullable: true }, message: { type: string } } }
+    Notification: { type: object, required: [id, type, title, message, createdAt], properties: { id: { type: integer, format: int64 }, type: { type: string, enum: [timetable_published, session_changed, session_cancelled] }, title: { type: string }, message: { type: string }, createdAt: { type: string, format: date-time }, readAt: { type: string, format: date-time, nullable: true } } }
+    AuditLog: { type: object, required: [id, action, module, occurredAt], properties: { id: { type: integer, format: int64 }, action: { type: string }, module: { type: string }, entityType: { type: string, nullable: true }, entityId: { type: integer, format: int64, nullable: true }, occurredAt: { type: string, format: date-time } } }
+    PagedUsers: { type: object, required: [items, page, pageSize, total], properties: { items: { type: array, items: { $ref: '#/components/schemas/User' } }, page: { type: integer }, pageSize: { type: integer }, total: { type: integer } } }
+    PagedAuditLogs: { type: object, required: [items, page, pageSize, total], properties: { items: { type: array, items: { $ref: '#/components/schemas/AuditLog' } }, page: { type: integer }, pageSize: { type: integer }, total: { type: integer } } }
+    Problem: { type: object, required: [title, status], properties: { type: { type: string, format: uri }, title: { type: string }, status: { type: integer }, detail: { type: string }, errors: { type: object, additionalProperties: { type: array, items: { type: string } } } } }
+security:
+  - bearerAuth: []
