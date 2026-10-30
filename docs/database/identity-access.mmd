@@ -1,0 +1,31 @@
+erDiagram
+    APP_USERS ||--o| LECTURER_PROFILES : has
+    APP_USERS ||--o{ STUDENT_ENROLLMENTS : has
+    CLASS_SECTIONS ||--o{ STUDENT_ENROLLMENTS : enrolls
+
+    APP_USERS {
+        bigint id PK
+        varchar email UK
+        varchar password_hash
+        varchar full_name
+        user_role role
+        boolean is_active
+        timestamptz last_login_at
+    }
+    LECTURER_PROFILES {
+        bigint user_id PK, FK
+        varchar employee_code UK
+        varchar department
+    }
+    STUDENT_ENROLLMENTS {
+        bigint id PK
+        bigint student_user_id FK
+        bigint class_section_id FK
+        timestamptz enrolled_at
+    }
+    CLASS_SECTIONS {
+        bigint id PK
+        varchar code
+        varchar name
+        integer expected_size
+    }

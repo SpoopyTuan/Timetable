@@ -1,0 +1,49 @@
+erDiagram
+    ACADEMIC_YEARS ||--o{ TERMS : contains
+    TERMS ||--o{ CLASS_SECTIONS : includes
+    SUBJECTS ||--o{ CLASS_SECTIONS : defines
+
+    ACADEMIC_YEARS {
+        bigint id PK
+        varchar name UK
+        date starts_on
+        date ends_on
+        boolean is_active
+    }
+    TERMS {
+        bigint id PK
+        bigint academic_year_id FK
+        varchar name
+        date starts_on
+        date ends_on
+        boolean is_active
+    }
+    SUBJECTS {
+        bigint id PK
+        varchar code UK
+        varchar name
+        numeric credits
+        integer default_duration_minutes
+    }
+    CLASS_SECTIONS {
+        bigint id PK
+        bigint term_id FK
+        bigint subject_id FK
+        varchar code
+        varchar name
+        integer expected_size
+    }
+    ROOMS {
+        bigint id PK
+        varchar code UK
+        varchar name
+        varchar building
+        integer capacity
+    }
+    TIME_SLOTS {
+        bigint id PK
+        varchar name UK
+        smallint day_of_week
+        time starts_at
+        time ends_at
+    }

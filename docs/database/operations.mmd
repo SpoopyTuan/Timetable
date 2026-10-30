@@ -1,0 +1,57 @@
+erDiagram
+    TERMS ||--o{ IMPORT_BATCHES : scopes
+    IMPORT_BATCHES ||--o{ IMPORT_ERRORS : reports
+    TIMETABLE_SESSIONS ||--o{ NOTIFICATIONS : triggers
+    APP_USERS ||--o{ NOTIFICATIONS : receives
+    APP_USERS ||--o{ AUDIT_LOGS : performs
+
+    IMPORT_BATCHES {
+        bigint id PK
+        bigint term_id FK
+        varchar file_name
+        varchar import_type
+        import_status status
+        integer total_rows
+        integer success_rows
+        integer failed_rows
+        bigint imported_by FK
+    }
+    IMPORT_ERRORS {
+        bigint id PK
+        bigint import_batch_id FK
+        integer row_number
+        varchar column_name
+        varchar message
+    }
+    NOTIFICATIONS {
+        bigint id PK
+        bigint recipient_user_id FK
+        bigint timetable_session_id FK
+        notification_type type
+        varchar title
+        text message
+        timestamptz read_at
+    }
+    AUDIT_LOGS {
+        bigint id PK
+        bigint actor_user_id FK
+        varchar action
+        varchar module
+        varchar entity_type
+        bigint entity_id
+        jsonb details
+        timestamptz occurred_at
+    }
+    APP_USERS {
+        bigint id PK
+        varchar email
+        user_role role
+    }
+    TERMS {
+        bigint id PK
+        varchar name
+    }
+    TIMETABLE_SESSIONS {
+        bigint id PK
+        session_status status
+    }

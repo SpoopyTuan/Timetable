@@ -1,0 +1,60 @@
+erDiagram
+    TERMS ||--o{ TIMETABLE_VERSIONS : owns
+    TIMETABLE_VERSIONS ||--o{ TIMETABLE_SESSIONS : contains
+    CLASS_SECTIONS ||--o{ TIMETABLE_SESSIONS : attends
+    SUBJECTS ||--o{ TIMETABLE_SESSIONS : teaches
+    LECTURER_PROFILES ||--o{ TIMETABLE_SESSIONS : delivers
+    ROOMS ||--o{ TIMETABLE_SESSIONS : hosts
+    LECTURER_PROFILES ||--o{ LECTURER_AVAILABILITY : declares
+
+    TERMS {
+        bigint id PK
+        varchar name
+    }
+    TIMETABLE_VERSIONS {
+        bigint id PK
+        bigint term_id FK
+        integer version_number
+        timetable_status status
+        timestamptz published_at
+        bigint published_by FK
+    }
+    TIMETABLE_SESSIONS {
+        bigint id PK
+        bigint timetable_version_id FK
+        bigint class_section_id FK
+        bigint subject_id FK
+        bigint lecturer_user_id FK
+        bigint room_id FK
+        date session_date
+        time starts_at
+        time ends_at
+        session_status status
+        text cancellation_reason
+    }
+    CLASS_SECTIONS {
+        bigint id PK
+        integer expected_size
+    }
+    SUBJECTS {
+        bigint id PK
+        varchar code
+        varchar name
+    }
+    LECTURER_PROFILES {
+        bigint user_id PK, FK
+        varchar employee_code
+    }
+    ROOMS {
+        bigint id PK
+        varchar code
+        integer capacity
+    }
+    LECTURER_AVAILABILITY {
+        bigint id PK
+        bigint lecturer_user_id FK
+        date available_on
+        time starts_at
+        time ends_at
+        availability_status status
+    }
