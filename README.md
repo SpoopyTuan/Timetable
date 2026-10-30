@@ -179,3 +179,119 @@ The dashboard should give each role a short path to their next task:
 - **Coordinator:** draft versus published status, sessions awaiting assignment, conflicts, upcoming changes, and quick actions to plan or publish.
 - **Lecturer:** today’s and next sessions, availability reminder, and recent schedule changes.
 - **Student:** today’s and next classes, room changes, cancelled classes, and the current term timetable.
+
+## 3. C4 Architecture
+
+This section describes the target architecture at C4 Levels 1–3. The diagrams are technology-neutral so that the selected frontend and backend frameworks can change without changing the system responsibilities.
+
+### C1 — System Context
+
+```mermaid
+flowchart LR
+    admin([Administrator])
+    coordinator([Timetable Coordinator])
+    lecturer([Lecturer])
+    student([Student])
+
+    subgraph boundary[ ]
+        timetable["Timetable Management System<br/><i>[Software System]</i><br/>Plans, checks, publishes, and distributes<br/>academic timetables"]
+    end
+
+    admin -- "manages users and academic data" --> timetable
+    coordinator -- "plans sessions and publishes timetables" --> timetable
+    lecturer -- "maintains availability and views assignments" --> timetable
+    student -- "views the timetable for an enrolled class" --> timetable
+
+    style timetable fill:#1168bd,color:#fff
+```
+
+### C2 — Container
+
+```mermaid
+flowchart TB
+    operator([Administrator / Timetable Coordinator])
+    reader([Lecturer / Student])
+
+    subgraph platform["Timetable Management System [Software System Boundary]"]
+        direction TB
+        web["Web Frontend<br/><i>[Container]</i><br/>Responsive screens, timetable calendar,<br/>forms, filters, and role-based navigation"]
+        api["Backend API<br/><i>[Container]</i><br/>Authentication, authorization, scheduling rules,<br/>conflict detection, publication, import, and reporting"]
+        db[("Relational Database<br/><i>[Container]</i><br/>Users, academic data, sessions, timetables,<br/>availability, audit records, and notifications")]
+    end
+
+    spreadsheet[("Excel Workbook<br/><i>[External Data]</i><br/>Master data or timetable-session import")]
+    notification["Notification Service<br/><i>[External System]</i><br/>Email or in-app delivery of timetable changes"]
+
+    operator --> web
+    reader --> web
+    web -- "HTTPS / JSON" --> api
+    spreadsheet -.->|"selected and uploaded"| web
+    api -- "SQL" --> db
+    api -- "change notifications" --> notification
+
+    style web fill:#1168bd,color:#fff
+    style api fill:#1168bd,color:#fff
+    style db fill:#1168bd,color:#fff
+```
+
+### C3 — Component
+
+```mermaid
+flowchart TB
+    subgraph backend["Backend API [Container]"]
+        direction TB
+        http["HTTP API<br/><i>[Component]</i><br/>Routes, request validation, response and error mapping"]
+        identity["Identity & Access<br/><i>[Component]</i><br/>Login, session/token, roles, class-enrollment and ownership checks"]
+        academic["Academic Data Management<br/><i>[Component]</i><br/>Terms, subjects, classes, lecturers, rooms, and time slots"]
+        planning["Timetable Planning<br/><i>[Component]</i><br/>Drafts, sessions, moves, cancellations, and publication workflow"]
+        conflict["Conflict Detection<br/><i>[Component]</i><br/>Class, lecturer, room, capacity, and availability checks"]
+        query["Timetable Query & Export<br/><i>[Component]</i><br/>Calendar views, filters, PDF/Excel export, and personal schedules"]
+        importer["Excel Import<br/><i>[Component]</i><br/>Template validation, preview, atomic import, and row-level results"]
+        notification["Notifications<br/><i>[Component]</i><br/>Determines affected users and sends timetable-change messages"]
+        audit["Audit Log<br/><i>[Component]</i><br/>Records security and business actions for traceability"]
+        persistence["Persistence<br/><i>[Component]</i><br/>Repositories, transaction boundaries, and database mapping"]
+    end
+
+    web["Web Frontend<br/><i>[Container]</i>"]
+    db[("Relational Database<br/><i>[Container]</i>")]
+    workbook[("Excel Workbook<br/><i>[External Data]</i>")]
+    delivery["Notification Service<br/><i>[External System]</i>"]
+
+    web --> http
+    workbook -.->|"uploaded through the web frontend"| http
+    http --> identity
+    http --> academic
+    http --> planning
+    http --> query
+    http --> importer
+    planning --> conflict
+    planning --> persistence
+    academic --> persistence
+    identity --> persistence
+    conflict --> persistence
+    query --> persistence
+    importer --> academic
+    importer --> planning
+    importer --> persistence
+    planning -.->|"session and publication events"| notification
+    notification --> delivery
+    identity -.->|"security events"| audit
+    academic -.->|"master-data events"| audit
+    planning -.->|"timetable events"| audit
+    importer -.->|"import results"| audit
+    audit --> persistence
+    persistence --> db
+
+    style http fill:#1168bd,color:#fff
+    style identity fill:#1168bd,color:#fff
+    style academic fill:#1168bd,color:#fff
+    style planning fill:#0b4f9e,color:#fff
+    style conflict fill:#0b4f9e,color:#fff
+    style query fill:#1168bd,color:#fff
+    style importer fill:#1168bd,color:#fff
+    style notification fill:#1168bd,color:#fff
+    style audit fill:#1168bd,color:#fff
+    style persistence fill:#1168bd,color:#fff
+```
+
+The C3 design makes conflict detection a separate component so the same rules can be applied consistently when a session is created, edited, imported, or published.
